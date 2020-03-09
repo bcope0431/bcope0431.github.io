@@ -14,149 +14,6 @@ function randomInt800() {
     return Math.floor(Math.random() * 750) + 30;
 }
 
-// The Shooter Army:
-// shooter army's soldiers run away and shoot enemies
-// run towards each other?
-function Shooter(game, theX, theY) {
-    this.type = "Shooter";
-    this.color = "Blue";
-    this.radius = 10;
-    this.visualRadius = 400;
-    this.shotRadius = 200;
-    this.numShots = 1;
-    this.lastShotTime = 0;
-    this.x = theX;
-    this.y = theY;
-    this.HP = 1;
-    this.running = false;
-    this.game = game;
-    this.velocity = { x: 50, y: 50};
-    var speed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
-    if (speed > maxSpeed) {
-        var ratio = maxSpeed / speed;
-        this.velocity.x *= ratio;
-        this.velocity.y *= ratio;
-    }
-    Entity.call(this, game, this.x, this.y);
-}
-
-Shooter.prototype = new Entity();
-Shooter.prototype.constructor = Shooter;
-
-Shooter.prototype.collideRight = function () {
-    return this.x + this.radius > 800;
-};
-Shooter.prototype.collideLeft = function () {
-    return this.x - this.radius < 0;
-};
-Shooter.prototype.collideBottom = function () {
-    return this.y + this.radius > 800;
-};
-Shooter.prototype.collideTop = function () {
-    return this.y - this.radius < 0;
-};
-Shooter.prototype.collide = function (other) {
-    return distance(this, other) < this.radius + other.radius;
-};
-
-Shooter.prototype.update = function () {
-    Entity.prototype.update.call(this);
-    this.lastShotTime += this.game.clockTick;
-
-    if (this.HP <= 0) {
-        this.removeFromWorld = true;
-    }
-    if (this.lastShotTime > 3 && this.numShots == 0) {
-        this.lastShotTime = 0;
-        this.numShots++;
-    }
-    this.x -= this.velocity.x * this.game.clockTick;
-    this.y -= this.velocity.y * this.game.clockTick;
-
-    if(this.collideLeft() || this.collideRight()) {
-        this.velocity.x = -this.velocity.x;
-        if (this.collideLeft()) this.x = this.radius;
-        if (this.collideRight()) this.x = 800 - this.radius;
-        this.x += this.velocity.x * this.game.clockTick;
-        this.y += this.velocity.y * this.game.clockTick;
-    }
-    if (this.collideTop() || this.collideBottom()) {
-        this.velocity.y = -this.velocity.y;
-        if (this.collideTop()) this.y = this.radius;
-        if (this.collideBottom()) this.y = 800 - this.radius;
-        this.x += this.velocity.x * this.game.clockTick;
-        this.y += this.velocity.y * this.game.clockTick;
-    }
-    
-
-    for (var i = 0; i < this.game.shooterArmy.length; i++) {
-        var entity = this.game.shooterArmy[i];
-        if (entity != this && this.collide(entity)) {
-            this.velocity.x = -this.velocity.x;
-            this.velocity.y = -this.velocity.y;
-        }
-    }
-    this.running = false;
-    for (var i = 0; i < this.game.meleeArmy.length; i++) {
-        var entity = this.game.meleeArmy[i];
-        if (entity != this && this.collide(entity)) {
-            this.velocity.x = -this.velocity.x;
-            this.velocity.y = -this.velocity.y;
-        }
-        if (entity != this && this.collide({ x: entity.x, y: entity.y, radius: this.visualRadius })) {
-            var dist = distance(this, entity); 
-            if (dist > this.radius + entity.radius + 10) {
-                var difX = (entity.x - this.x) / dist;
-                var difY = (entity.y - this.y) / dist;
-                this.velocity.x += difX * acceleration / (dist * dist);
-                this.velocity.y += difY * acceleration / (dist * dist);
-                
-                
-            }
-            this.running = true;
-        }
-        if (entity != this && this.collide({ x: entity.x, y: entity.y, radius: this.shotRadius })) {
-            var dist = distance(this, entity);
-            if (dist > this.radius + entity.radius) {
-                var difX = (entity.x - this.x) / dist;
-                var difY = (entity.y - this.y) / dist;
-                if (this.numShots > 0) {
-                    this.game.addEntity(new Bullet(this.game, this.x, this.y, entity));
-                    this.numShots--;
-                }  
-            } 
-        }    
-    }
-    if (!this.running) {
-        entity = this.game.shooterArmy[randomInt(this.game.shooterArmy.length)];
-        var dist = distance(this, entity);
-        if (dist > this.radius + entity.radius + 2) {
-            var difX = (entity.x - this.x) / dist;
-            var difY = (entity.y - this.y) / dist;
-            this.velocity.x -= difX * acceleration / (dist * dist);
-            this.velocity.y -= difY * acceleration / (dist * dist);
-        }
-    }
-
-    var speed = Math.sqrt(this.velocity.x*this.velocity.x + this.velocity.y*this.velocity.y);
-    if (speed > maxSpeed) {
-        var ratio = maxSpeed / speed;
-        this.velocity.x *= ratio;
-        this.velocity.y *= ratio;
-    }
-
-    this.velocity.x -= (1 - friction) * this.game.clockTick * this.velocity.x;
-    this.velocity.y -= (1 - friction) * this.game.clockTick * this.velocity.y;
-}
-
-Shooter.prototype.draw = function (ctx) {
-    ctx.beginPath();
-    ctx.fillStyle = this.color;
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
-    ctx.fill();
-    ctx.closePath();
-}
-
 function Turret(game, theX, theY) {
     this.type = "Shooter";
     this.color = "Blue";
@@ -446,6 +303,7 @@ var numMelee = 0;
 var turretSpawnTime = 0;
 var meleeSpawnTime = 0;
 var ASSET_MANAGER = new AssetManager();
+var gameEngine = new GameEngine();
 
 ASSET_MANAGER.queueDownload("./img/960px-Blank_Go_board.png");
 ASSET_MANAGER.queueDownload("./img/black.png");
@@ -456,7 +314,7 @@ ASSET_MANAGER.downloadAll(function () {
     var canvas = document.getElementById('gameWorld');
     var ctx = canvas.getContext('2d');
 
-    var gameEngine = new GameEngine();
+    
 
     var melee = new Melee(gameEngine, 30, 30);
     var melee2 = new Melee(gameEngine, 750, 750);
@@ -471,3 +329,112 @@ ASSET_MANAGER.downloadAll(function () {
 });
 
 
+window.onload = function () {
+    var socket = io.connect("http://24.16.255.56:8888"); 
+    var text = document.getElementById("text");
+    var saveButton = document.getElementById("save");
+    var loadButton = document.getElementById("load");
+  
+    saveButton.onclick = function (e) {
+        e.preventDefault();
+        var allEnts = gameEngine.entities;
+        var savedData = [];
+        
+        for (var i = 0; i < allEnts.length; i++) {
+            var ent = allEnts[i];
+            if (ent.type == "Shooter") {
+                savedData.push({
+                    x: allEnts[i].x,
+                    y: allEnts[i].y,
+                    color: allEnts[i].color,
+                    radius: allEnts[i].radius,
+                    shotRadius: allEnts[i].shotRadius,
+                    numShots: allEnts[i].numShots,
+                    lastShotTime: allEnts[i].lastShotTime,
+                    HP: allEnts[i].HP,
+                    type: allEnts[i].type
+                });
+            } else if (ent.type == "Bullet") {
+                savedData.push({
+                    x: allEnts[i].x,
+                    y: allEnts[i].y,
+                    color: allEnts[i].color,
+                    timeAlive: allEnts[i].timeAlive,
+                    target: allEnts[i].target,
+                    velocityX: allEnts[i].velocity.x,
+                    velocityY: allEnts[i].velocity.y,
+                    radius: allEnts[i].radius,
+                    type: allEnts[i].type
+                });
+            } else if (ent.type == "Melee") {
+                savedData.push({
+                    x: allEnts[i].x,
+                    y: allEnts[i].y,
+                    radius: allEnts[i].radius,
+                    visualRadius: allEnts[i].visualRadius,
+                    HP: allEnts[i].HP,
+                    velocityX: allEnts[i].velocity.x,
+                    velocityY: allEnts[i].velocity.y,
+                    color: allEnts[i].color,
+                    type: allEnts[i].type
+                });
+            }
+        }
+        console.log("save");
+        text.innerHTML = "Saved."
+        socket.emit("save", { studentname: "Bayley Cope", statename: "aState", data: savedData });
+    };
+  
+    loadButton.onclick = function (e) {
+        e.preventDefault();
+        console.log("load");
+        text.innerHTML = "Loaded."
+        socket.emit("load", { studentname: "Bayley Cope", statename: "aState" });
+    };
+
+    socket.on("load", function (data) {
+        gameEngine.shooterArmy = [];
+        gameEngine.projectiles = [];
+        gameEngine.meleeArmy = [];
+        var entities = data.data;
+        for (var i = 0; i < entities.length; i++) {
+            var ent = entities[i];
+            var turret = new Turret(gameEngine);
+            var melee = new Melee(gameEngine);
+            var bullet = new Bullet(gameEngine);
+            if (ent.type == "Shooter") {
+                turret.x = ent.x;
+                turret.y = ent.y;
+                turret.color = ent.color;
+                turret.radius = ent.radius;
+                turret.shotRadius = ent.shotRadius;
+                turret.numShots = ent.numShots;
+                turret.lastShotTime = ent.lastShotTime;
+                turret.HP = ent.HP;
+                turret.type = ent.type;
+            } else if (ent.type == "Projectile") {
+                bullet.x = ent.x;
+                bullet.y = ent.y;
+                bullet.color = ent.color;
+                bullet.timeAlive = ent.timeAlive;
+                bullet.target = ent.target;
+                bullet.velocity.x = ent.velocityX;
+                bullet.velocity.y = ent.velocityY;
+                bullet.radius = ent.radius;
+                bullet.type = ent.type;
+            } else if (ent.type == "Melee") {
+                melee.x = ent.x;
+                melee.y = ent.y;
+                melee.radius = ent.radius;
+                melee.visualRadius = ent.visualRadius;
+                melee.HP = ent.HP;
+                melee.velocity.x = ent.velocityX;
+                melee.velocity.y = ent.velocityY;
+                melee.color = ent.color;
+                melee.type = ent.type;
+            }
+        }
+        console.log(data);
+    });
+  
+  };
