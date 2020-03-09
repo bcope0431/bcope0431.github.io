@@ -412,6 +412,7 @@ window.onload = function () {
                 turret.lastShotTime = ent.lastShotTime;
                 turret.HP = ent.HP;
                 turret.type = ent.type;
+                gameEngine.shooterArmy.push(turret);
             } else if (ent.type == "Projectile") {
                 bullet.x = ent.x;
                 bullet.y = ent.y;
@@ -422,6 +423,7 @@ window.onload = function () {
                 bullet.velocity.y = ent.velocityY;
                 bullet.radius = ent.radius;
                 bullet.type = ent.type;
+                gameEngine.projectiles.push(bullet);
             } else if (ent.type == "Melee") {
                 melee.x = ent.x;
                 melee.y = ent.y;
@@ -432,6 +434,7 @@ window.onload = function () {
                 melee.velocity.y = ent.velocityY;
                 melee.color = ent.color;
                 melee.type = ent.type;
+                gameEngine.meleeArmy.push(melee);
             }
         }
         console.log(data);
