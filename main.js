@@ -438,6 +438,7 @@ window.onload = function () {
             }
         }
         console.log(data);
+        console.log("Printed the Data");
     });
   
   };
