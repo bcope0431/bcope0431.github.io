@@ -393,12 +393,13 @@ window.onload = function () {
     };
 
     socket.on("load", function (data) {
+        gameEngine.entities = [];
         gameEngine.shooterArmy = [];
         gameEngine.projectiles = [];
         gameEngine.meleeArmy = [];
-        var entities = data.data;
-        for (var i = 0; i < entities.length; i++) {
-            var ent = entities[i];
+        var savedEntities = data.data;
+        for (var i = 0; i < savedEntities.length; i++) {
+            var ent = savedEntities[i];
             var turret = new Turret(gameEngine);
             var melee = new Melee(gameEngine);
             var bullet = new Bullet(gameEngine);
@@ -413,6 +414,7 @@ window.onload = function () {
                 turret.HP = ent.HP;
                 turret.type = ent.type;
                 gameEngine.shooterArmy.push(turret);
+                gameEngine.entities.push(turret);
             } else if (ent.type == "Projectile") {
                 bullet.x = ent.x;
                 bullet.y = ent.y;
@@ -424,6 +426,7 @@ window.onload = function () {
                 bullet.radius = ent.radius;
                 bullet.type = ent.type;
                 gameEngine.projectiles.push(bullet);
+                gameEngine.entities.push(bullet);
             } else if (ent.type == "Melee") {
                 melee.x = ent.x;
                 melee.y = ent.y;
@@ -435,6 +438,7 @@ window.onload = function () {
                 melee.color = ent.color;
                 melee.type = ent.type;
                 gameEngine.meleeArmy.push(melee);
+                gameEngine.entities.push(melee);
             }
         }
         console.log(data);
